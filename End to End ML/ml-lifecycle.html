@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Machine Learning Lifecycle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A1220;
+    --panel:#101b30;
+    --panel-2:#0c1526;
+    --line:rgba(126,140,171,0.16);
+    --line-strong:rgba(126,140,171,0.30);
+    --cyan:#3DD6D0;
+    --cyan-soft:rgba(61,214,208,0.12);
+    --amber:#FFB23E;
+    --coral:#FF6B6B;
+    --text:#EAEFF8;
+    --muted:#8592AE;
+    --muted-2:#5D6B87;
+    --display:'Space Grotesk',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --body:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1100px 700px at 78% -8%, rgba(61,214,208,0.10), transparent 60%),
+      radial-gradient(900px 600px at 10% 108%, rgba(255,178,62,0.07), transparent 55%),
+      var(--ink);
+    color:var(--text);
+    font-family:var(--body);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  .wrap{max-width:1140px;margin:0 auto;padding:34px 22px 46px}
+
+  /* ---------- header ---------- */
+  header{margin-bottom:22px}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.34em;text-transform:uppercase;
+    color:var(--cyan);display:flex;align-items:center;gap:12px;margin-bottom:14px;
+  }
+  .eyebrow::before{content:"";width:26px;height:1px;background:linear-gradient(90deg,var(--cyan),transparent)}
+  .eyebrow .live{
+    margin-left:auto;color:var(--muted);letter-spacing:.24em;display:flex;align-items:center;gap:7px
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 0 rgba(61,214,208,.6);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(61,214,208,.5)}70%{box-shadow:0 0 0 8px rgba(61,214,208,0)}100%{box-shadow:0 0 0 0 rgba(61,214,208,0)}}
+  h1{
+    font-family:var(--display);font-weight:600;letter-spacing:-.02em;
+    font-size:clamp(30px,5.4vw,50px);line-height:1.02;margin:0 0 12px;
+  }
+  h1 .fade{color:var(--muted-2)}
+  .lede{color:var(--muted);max-width:60ch;font-size:15.5px}
+  .lede b{color:var(--text);font-weight:500}
+
+  /* ---------- board ---------- */
+  .board{
+    display:grid;grid-template-columns:0.92fr 1.08fr;gap:18px;margin-top:26px;align-items:stretch;
+  }
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:18px;position:relative;overflow:hidden;
+  }
+  .card::before{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.03)}
+
+  /* ring card */
+  .ring-card{padding:18px 18px 14px;display:flex;flex-direction:column}
+  .ring-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
+  .ring-head .t{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+  .ring-head .c{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+  .ring-stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+  svg.ring{width:100%;height:auto;max-height:420px;display:block;overflow:visible}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--muted);
+    padding-top:10px;margin-top:2px;border-top:1px solid var(--line)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend .k{width:16px;height:0;border-top:2px solid var(--cyan);display:inline-block}
+  .legend .k.fb{border-top:2px dashed var(--amber)}
+  .legend .k.pk{width:9px;height:9px;border-radius:50%;border:0;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+
+  /* svg ring pieces */
+  .arc{fill:none;stroke:var(--line-strong);stroke-width:2}
+  .arc.on{stroke:var(--cyan);stroke-width:3;filter:drop-shadow(0 0 5px rgba(61,214,208,.55))}
+  .arc.fb{stroke:var(--amber);stroke-width:2;stroke-dasharray:5 6;opacity:.8}
+  .arc.fb.on{stroke:var(--amber);stroke-width:3;filter:drop-shadow(0 0 5px rgba(255,178,62,.55));opacity:1}
+  .node circle.bg{fill:var(--panel-2);stroke:var(--line-strong);stroke-width:1.5;transition:all .25s ease}
+  .node.active circle.bg{fill:#0c2230;stroke:var(--cyan);stroke-width:2;filter:drop-shadow(0 0 9px rgba(61,214,208,.5))}
+  .node.done circle.bg{stroke:rgba(61,214,208,.5)}
+  .node text.num{font-family:var(--mono);font-weight:600;font-size:13px;fill:var(--muted);text-anchor:middle;dominant-baseline:central;transition:fill .25s}
+  .node.active text.num{fill:var(--cyan)}
+  .node.done text.num{fill:rgba(61,214,208,.75)}
+  .node text.lbl{font-family:var(--mono);font-size:10px;letter-spacing:.02em;fill:var(--muted-2);text-anchor:middle;transition:fill .25s}
+  .node.active text.lbl{fill:var(--text)}
+  .node{cursor:pointer}
+  .node:focus{outline:none}
+  .node:focus circle.bg{stroke:var(--cyan)}
+  .packet{fill:var(--cyan);filter:drop-shadow(0 0 7px var(--cyan))}
+  .packet.fb{fill:var(--amber);filter:drop-shadow(0 0 7px var(--amber))}
+  .center-label{font-family:var(--display);fill:var(--muted-2);text-anchor:middle}
+
+  /* detail card */
+  .detail-card{padding:20px 20px 18px;display:flex;flex-direction:column;gap:14px}
+  .meta-top{display:flex;align-items:center;gap:12px}
+  .tagchip{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--cyan);
+    border:1px solid rgba(61,214,208,.35);background:var(--cyan-soft);padding:5px 10px;border-radius:999px}
+  .stagenum{font-family:var(--mono);font-size:12px;color:var(--muted-2)}
+  .meta-name{font-family:var(--display);font-weight:600;font-size:clamp(20px,2.6vw,26px);letter-spacing:-.01em;margin:-2px 0 -4px}
+  .viz-shell{position:relative;border:1px solid var(--line);border-radius:13px;background:
+      linear-gradient(180deg,rgba(255,255,255,0.015),rgba(0,0,0,0.12)); overflow:hidden;aspect-ratio:16/9}
+  .viz-shell canvas{position:absolute;inset:0;width:100%;height:100%}
+  .viz-tag{position:absolute;top:9px;left:11px;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+    color:var(--muted-2);text-transform:uppercase;pointer-events:none}
+  .summary{color:var(--muted);font-size:14.5px;margin:0}
+  .summary b{color:var(--text);font-weight:500}
+  .io{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}
+  .io .box{border:1px solid var(--line);border-radius:11px;padding:9px 12px;background:rgba(255,255,255,0.012)}
+  .io .box .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);margin-bottom:3px}
+  .io .box .v{font-size:13px;color:var(--text)}
+  .io .arrow{color:var(--cyan);font-size:18px}
+  .watch{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--muted);
+    border-left:2px solid var(--amber);padding:2px 0 2px 12px}
+  .watch b{color:var(--amber);font-weight:600;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;padding-top:2px}
+
+  /* ---------- transport ---------- */
+  .transport{margin-top:20px;background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid var(--line);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .prog{flex:1;min-width:180px}
+  .prog-track{height:6px;border-radius:6px;background:rgba(255,255,255,0.06);overflow:hidden;position:relative}
+  .prog-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--cyan),#7ff0e9);border-radius:6px}
+  .prog-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted-2);margin-top:6px;letter-spacing:.06em}
+  .controls{display:flex;align-items:center;gap:8px}
+  button.ctrl{
+    font-family:var(--mono);color:var(--text);background:rgba(255,255,255,0.03);
+    border:1px solid var(--line-strong);border-radius:10px;height:38px;min-width:38px;padding:0 10px;
+    display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;transition:all .16s ease}
+  button.ctrl:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-soft)}
+  button.ctrl:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  button.ctrl.play{min-width:44px}
+  button.ctrl.speed{font-size:11px;letter-spacing:.04em}
+  footer{margin-top:22px;font-family:var(--mono);font-size:11px;color:var(--muted-2);text-align:center;letter-spacing:.04em}
+  footer b{color:var(--muted)}
+  kbd{font-family:var(--mono);font-size:10px;border:1px solid var(--line-strong);border-radius:5px;padding:1px 5px;color:var(--muted)}
+
+  @media (max-width:820px){
+    .board{grid-template-columns:1fr}
+    svg.ring{max-height:340px}
+    .transport{gap:12px}
+    .prog{order:3;flex-basis:100%}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .eyebrow .dot{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">
+      Machine Learning · Lifecycle
+      <span class="live"><span class="dot"></span>PIPELINE RUNNING</span>
+    </div>
+    <h1>From a question to production &mdash; <span class="fade">and back again.</span></h1>
+    <p class="lede">A machine learning system is never &ldquo;done.&rdquo; Data flows through eight stages, ships to production, decays, and loops home to be retrained. Watch the packet travel &mdash; <b>each stage shows what actually happens to the data.</b></p>
+  </header>
+
+  <div class="board">
+    <!-- RING -->
+    <div class="card ring-card">
+      <div class="ring-head">
+        <span class="t">Lifecycle map</span>
+        <span class="c" id="ringCounter">stage 01 / 08</span>
+      </div>
+      <div class="ring-stage">
+        <svg class="ring" viewBox="0 0 460 460" id="ring" role="img" aria-label="Machine learning lifecycle ring diagram"></svg>
+      </div>
+      <div class="legend">
+        <span><i class="k"></i> stage flow</span>
+        <span><i class="k fb"></i> feedback / retrain</span>
+        <span><i class="k pk"></i> data packet</span>
+      </div>
+    </div>
+
+    <!-- DETAIL -->
+    <div class="card detail-card">
+      <div class="meta-top">
+        <span class="tagchip" id="dTag">DEFINE</span>
+        <span class="stagenum" id="dNum">STAGE 01</span>
+      </div>
+      <div class="meta-name" id="dName">Problem Framing</div>
+      <div class="viz-shell">
+        <div class="viz-tag" id="vizTag">// live</div>
+        <canvas id="viz"></canvas>
+      </div>
+      <p class="summary" id="dSummary"></p>
+      <div class="io">
+        <div class="box"><div class="k">Input</div><div class="v" id="dIn"></div></div>
+        <div class="arrow">&rarr;</div>
+        <div class="box"><div class="k">Output</div><div class="v" id="dOut"></div></div>
+      </div>
+      <div class="watch"><b>watch</b><span id="dWatch"></span></div>
+    </div>
+  </div>
+
+  <!-- TRANSPORT -->
+  <div class="transport">
+    <div class="controls">
+      <button class="ctrl" id="btnRestart" title="Restart (R)" aria-label="Restart">&#8635;</button>
+      <button class="ctrl" id="btnPrev" title="Previous stage (←)" aria-label="Previous">&#9664;</button>
+      <button class="ctrl play" id="btnPlay" title="Play / pause (Space)" aria-label="Play or pause">&#10073;&#10073;</button>
+      <button class="ctrl" id="btnNext" title="Next stage (→)" aria-label="Next">&#9654;</button>
+      <button class="ctrl speed" id="btnSpeed" title="Playback speed" aria-label="Speed">1&times;</button>
+    </div>
+    <div class="prog">
+      <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+      <div class="prog-meta"><span id="progName">Problem Framing</span><span id="progHint">auto-advancing</span></div>
+    </div>
+  </div>
+
+  <footer>
+    Click any node to jump &nbsp;·&nbsp; <kbd>Space</kbd> play &nbsp; <kbd>&larr;</kbd><kbd>&rarr;</kbd> step &nbsp; <kbd>R</kbd> restart &nbsp;·&nbsp; <b>the loop never really ends</b>
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const P = {
+    cyan:'#3DD6D0', cyanDim:'rgba(61,214,208,0.45)', cyanFaint:'rgba(61,214,208,0.16)',
+    amber:'#FFB23E', coral:'#FF6B6B', green:'#5FE0A6',
+    text:'#EAEFF8', muted:'#8592AE', muted2:'#5D6B87',
+    line:'rgba(126,140,171,0.22)', grid:'rgba(126,140,171,0.12)', panel:'#0c1526'
+  };
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  const easeOut=t=>1-Math.pow(1-t,3);
+  const TAU=Math.PI*2;
+  // deterministic pseudo-random
+  const rnd=(s)=>{let x=Math.sin(s*127.1+311.7)*43758.5453;return x-Math.floor(x);};
+
+  /* ============================ STAGE CONTENT ============================ */
+  const STAGES=[
+    {tag:'DEFINE', name:'Problem Framing', short:'FRAME',
+     summary:'Turn a fuzzy business question into a concrete ML task with a <b>target</b> and a <b>success metric</b>. Is it classification, regression, ranking?',
+     in:'Objective + constraints', out:'Task type & metric',
+     watch:'No model can fix a badly framed question. The metric you pick here judges everything downstream.',
+     draw:drawFrame},
+    {tag:'GATHER', name:'Data Collection', short:'COLLECT',
+     summary:'Pull the raw signals &mdash; databases, APIs, logs, sensors &mdash; into one place and build a dataset.',
+     in:'Sources', out:'Raw dataset',
+     watch:'Bias enters here. Whatever you fail to collect, the model can never learn.',
+     draw:drawCollect},
+    {tag:'CLEAN', name:'Data Preparation', short:'PREP',
+     summary:'Fix types, fill or drop missing values, remove duplicates and outliers &mdash; then <b>split</b> into train / validation / test.',
+     in:'Raw dataset', out:'Clean, split data',
+     watch:'Never let test data touch training. That leak inflates your scores and betrays you in production.',
+     draw:drawPrep},
+    {tag:'SHAPE', name:'Feature Engineering', short:'FEATURES',
+     summary:'Transform raw columns into signals a model can use: encodings, scaling, aggregates, derived ratios.',
+     in:'Clean data', out:'Feature matrix',
+     watch:'Good features beat fancy models. This is where most of the real gains hide.',
+     draw:drawFeatures},
+    {tag:'LEARN', name:'Model Training', short:'TRAIN',
+     summary:'Fit a model to the training set, tune hyperparameters, and iterate to <b>minimise the loss</b>.',
+     in:'Features + labels', out:'Trained model',
+     watch:'Falling training loss is not success. Always check the validation curve for overfitting.',
+     draw:drawTrain},
+    {tag:'TEST', name:'Evaluation', short:'EVAL',
+     summary:'Score the model on held-out data against the metric chosen in step 01. Ship, or go back and iterate.',
+     in:'Model + test set', out:'Verdict: ship or iterate',
+     watch:'One number hides a lot. Read the confusion matrix &mdash; accuracy lies when classes are imbalanced.',
+     draw:drawEval},
+    {tag:'SERVE', name:'Deployment', short:'DEPLOY',
+     summary:'Package the approved model behind an endpoint so real requests get real predictions, at scale.',
+     in:'Approved model', out:'Live predictions',
+     watch:'Training-serving skew: the code that builds features in prod must match the notebook exactly.',
+     draw:drawDeploy},
+    {tag:'WATCH', name:'Monitoring', short:'MONITOR',
+     summary:'Track live accuracy, latency and <b>data drift</b>. When performance decays past a threshold, trigger a retrain.',
+     in:'Production signals', out:'Alerts → retrain',
+     watch:'Models rot as the world shifts. This is why the lifecycle is a loop, not a line.',
+     draw:drawMonitor},
+  ];
+  const N=STAGES.length;
+
+  /* ============================ RING (SVG) ============================ */
+  const SVGNS='http://www.w3.org/2000/svg';
+  const ring=document.getElementById('ring');
+  const CX=230, CY=230, R=150, NODE_R=27;
+  const angleOf=i=>(-90 + i*(360/N))*Math.PI/180;
+  const posOf=(i,rad=R)=>({x:CX+rad*Math.cos(angleOf(i)), y:CY+rad*Math.sin(angleOf(i))});
+  const posAtAngle=(deg,rad=R)=>({x:CX+rad*Math.cos(deg*Math.PI/180), y:CY+rad*Math.sin(deg*Math.PI/180)});
+
+  function arcPath(i0,i1){
+    const p0=posOf(i0), p1=posOf(i1);
+    return `M ${p0.x} ${p0.y} A ${R} ${R} 0 0 1 ${p1.x} ${p1.y}`;
+  }
+  const arcs=[];
+  for(let i=0;i<N;i++){
+    const a=document.createElementNS(SVGNS,'path');
+    const isFb=(i===N-1); // last arc (node8 -> node1) = feedback
+    a.setAttribute('d',arcPath(i,(i+1)%N));
+    a.setAttribute('class','arc'+(isFb?' fb':''));
+    a.dataset.idx=i; a.dataset.fb=isFb?'1':'0';
+    ring.appendChild(a); arcs.push(a);
+  }
+  // center label
+  const cLabel=document.createElementNS(SVGNS,'text');
+  cLabel.setAttribute('class','center-label'); cLabel.setAttribute('x',CX); cLabel.setAttribute('y',CY-8);
+  cLabel.setAttribute('font-size','13'); cLabel.setAttribute('letter-spacing','2');
+  cLabel.textContent='THE LOOP';
+  ring.appendChild(cLabel);
+  const cSub=document.createElementNS(SVGNS,'text');
+  cSub.setAttribute('class','center-label'); cSub.setAttribute('x',CX); cSub.setAttribute('y',CY+14);
+  cSub.setAttribute('font-size','11'); cSub.setAttribute('fill',P.muted2);
+  cSub.setAttribute('font-family',"'IBM Plex Mono',monospace"); cSub.setAttribute('letter-spacing','1');
+  cSub.textContent='never ends';
+  ring.appendChild(cSub);
+
+  // nodes
+  const nodeEls=[];
+  STAGES.forEach((s,i)=>{
+    const p=posOf(i);
+    const g=document.createElementNS(SVGNS,'g');
+    g.setAttribute('class','node'); g.setAttribute('tabindex','0');
+    g.setAttribute('role','button');
+    g.setAttribute('aria-label',`Stage ${i+1}: ${s.name}`);
+    g.setAttribute('transform',`translate(${p.x},${p.y})`);
+    const c=document.createElementNS(SVGNS,'circle');
+    c.setAttribute('class','bg'); c.setAttribute('r',NODE_R);
+    const num=document.createElementNS(SVGNS,'text');
+    num.setAttribute('class','num'); num.setAttribute('y',0);
+    num.textContent=String(i+1).padStart(2,'0');
+    // outside label
+    const lp=posOf(i,R+NODE_R+16);
+    const lbl=document.createElementNS(SVGNS,'text');
+    lbl.setAttribute('class','lbl');
+    // shift label relative to node center
+    lbl.setAttribute('x',lp.x-p.x); lbl.setAttribute('y',lp.y-p.y+3);
+    // anchor by horizontal position
+    const dx=lp.x-CX;
+    lbl.setAttribute('text-anchor', Math.abs(dx)<20?'middle':(dx>0?'start':'end'));
+    lbl.textContent=s.short;
+    g.appendChild(c); g.appendChild(num); g.appendChild(lbl);
+    g.addEventListener('click',()=>jumpTo(i));
+    g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();jumpTo(i);}});
+    ring.appendChild(g); nodeEls.push(g);
+  });
+  // packet on top
+  const packet=document.createElementNS(SVGNS,'circle');
+  packet.setAttribute('class','packet'); packet.setAttribute('r',7);
+  ring.appendChild(packet);
+
+  /* ============================ STATE ============================ */
+  const DWELL=4.8, TRAVEL=0.95;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let idx=0, phase='dwell', phaseT=0, playing=!reduced, speed=1, manual=false;
+  let stageClock = reduced?2.6:0, last=performance.now();
+
+  // DOM refs
+  const dTag=document.getElementById('dTag'), dNum=document.getElementById('dNum'),
+        dName=document.getElementById('dName'), dSummary=document.getElementById('dSummary'),
+        dIn=document.getElementById('dIn'), dOut=document.getElementById('dOut'),
+        dWatch=document.getElementById('dWatch'), vizTag=document.getElementById('vizTag'),
+        ringCounter=document.getElementById('ringCounter'),
+        progFill=document.getElementById('progFill'), progName=document.getElementById('progName'),
+        progHint=document.getElementById('progHint');
+
+  function enterStage(){
+    const s=STAGES[idx];
+    dTag.textContent=s.tag; dNum.textContent='STAGE '+String(idx+1).padStart(2,'0');
+    dName.textContent=s.name; dSummary.innerHTML=s.summary;
+    dIn.textContent=s.in; dOut.textContent=s.out; dWatch.textContent=s.watch;
+    vizTag.textContent='// '+s.tag.toLowerCase();
+    ringCounter.textContent='stage '+String(idx+1).padStart(2,'0')+' / '+String(N).padStart(2,'0');
+    progName.textContent=s.name;
+    stageClock = reduced?2.6:0;
+    // node classes
+    nodeEls.forEach((g,i)=>{
+      g.classList.toggle('active', i===idx);
+      g.classList.toggle('done', i<idx);
+    });
+  }
+
+  function setPlaying(v){
+    playing=v;
+    document.getElementById('btnPlay').innerHTML = playing? '&#10073;&#10073;' : '&#9654;';
+    document.getElementById('btnPlay').title = playing?'Pause (Space)':'Play (Space)';
+    progHint.textContent = playing?'auto-advancing':'paused';
+  }
+  function jumpTo(i){ idx=((i%N)+N)%N; phase='dwell'; phaseT=0; enterStage(); }
+  function next(){ if(phase==='travel')return; phase='travel'; phaseT=0; manual=true; }
+  function prev(){ jumpTo(idx-1); }
+
+  document.getElementById('btnPlay').addEventListener('click',()=>setPlaying(!playing));
+  document.getElementById('btnNext').addEventListener('click',next);
+  document.getElementById('btnPrev').addEventListener('click',prev);
+  document.getElementById('btnRestart').addEventListener('click',()=>{jumpTo(0);});
+  const speeds=[1,1.5,2];
+  document.getElementById('btnSpeed').addEventListener('click',function(){
+    let k=speeds.indexOf(speed); speed=speeds[(k+1)%speeds.length];
+    this.textContent=(speed%1===0?speed:speed.toFixed(1))+'\u00d7';
+  });
+  window.addEventListener('keydown',e=>{
+    if(e.key===' '){e.preventDefault();setPlaying(!playing);}
+    else if(e.key==='ArrowRight'){e.preventDefault();next();}
+    else if(e.key==='ArrowLeft'){e.preventDefault();prev();}
+    else if(e.key==='r'||e.key==='R'){jumpTo(0);}
+  });
+
+  /* ============================ CANVAS SETUP ============================ */
+  const canvas=document.getElementById('viz'), ctx=canvas.getContext('2d');
+  let CW=0,CH=0,dpr=Math.min(2,window.devicePixelRatio||1);
+  function resizeCanvas(){
+    const r=canvas.getBoundingClientRect();
+    CW=r.width; CH=r.height; dpr=Math.min(2,window.devicePixelRatio||1);
+    canvas.width=Math.round(CW*dpr); canvas.height=Math.round(CH*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  new ResizeObserver(resizeCanvas).observe(canvas);
+
+  /* ============================ MAIN LOOP ============================ */
+  function frame(now){
+    let dt=(now-last)/1000; last=now; dt=Math.min(dt,0.05);
+    if(playing||manual){
+      phaseT+=dt*speed;
+      if(playing) stageClock+=dt*speed;
+      if(phase==='dwell'){
+        if(phaseT>=DWELL){ if(playing){phase='travel';phaseT=0;} else phaseT=DWELL; }
+      } else { // travel
+        if(phaseT>=TRAVEL){ idx=(idx+1)%N; phase='dwell'; phaseT=0; manual=false; enterStage(); }
+      }
+    }
+    // packet + arcs
+    const tp = phase==='travel'? clamp(phaseT/TRAVEL,0,1):0;
+    const pang = -90 + (idx + ease(tp))*(360/N);
+    const pp = posAtAngle(pang);
+    packet.setAttribute('cx',pp.x); packet.setAttribute('cy',pp.y);
+    const onFb = (phase==='travel' && idx===N-1);
+    packet.classList.toggle('fb', onFb);
+    arcs.forEach((a,i)=>{
+      const active = (phase==='travel' && i===idx);
+      a.classList.toggle('on', active);
+    });
+    // progress bar
+    const frac = phase==='dwell'? clamp(phaseT/DWELL,0,1) : 1;
+    progFill.style.width=(frac*100).toFixed(1)+'%';
+    // draw stage viz
+    ctx.clearRect(0,0,CW,CH);
+    if(CW>0) STAGES[idx].draw(ctx,CW,CH,stageClock);
+    requestAnimationFrame(frame);
+  }
+
+  /* ============================ DRAW HELPERS ============================ */
+  function rr(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); }
+  function label(ctx,txt,x,y,color,size,align){
+    ctx.fillStyle=color||P.muted; ctx.font=(size||10)+"px 'IBM Plex Mono', monospace";
+    ctx.textAlign=align||'left'; ctx.textBaseline='alphabetic'; ctx.fillText(txt,x,y);
+  }
+
+  /* ---------- 01 Problem Framing ---------- */
+  function drawFrame(ctx,W,H,t){
+    const cx=W*0.5, cy=H*0.5, T=5, lt=t%T;
+    // target rings draw-in
+    const app=clamp(lt/1.1,0,1);
+    for(let k=3;k>=1;k--){
+      ctx.beginPath(); ctx.arc(cx,cy,18*k*app,0,TAU);
+      ctx.strokeStyle= k===1?P.cyan:`rgba(61,214,208,${0.5/k})`;
+      ctx.lineWidth= k===1?2.4:1.6; ctx.stroke();
+    }
+    // bullseye
+    ctx.beginPath(); ctx.arc(cx,cy,4*app,0,TAU); ctx.fillStyle=P.cyan; ctx.fill();
+    // orbiting question tokens captured one by one
+    const qs=['who churns?','by when?','how risky?','what\u2019s success?'];
+    qs.forEach((q,i)=>{
+      const start=0.4+i*0.5, cap=clamp((lt-start)/0.9,0,1);
+      const a=(-90+i*90)*Math.PI/180 + lt*0.15;
+      const rad=lerp(96,26,easeOut(cap));
+      const x=cx+rad*Math.cos(a), y=cy+rad*Math.sin(a);
+      ctx.globalAlpha=lerp(1,0,cap>0.85?(cap-0.85)/0.15:0);
+      ctx.fillStyle=cap>0.5?P.cyan:P.muted;
+      ctx.font="11px 'IBM Plex Mono', monospace"; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(q,x,y);
+      ctx.globalAlpha=1;
+    });
+    // resolved task chip
+    const show=clamp((lt-2.6)/0.6,0,1);
+    if(show>0){
+      ctx.globalAlpha=show;
+      const bw=Math.min(230,W-40), bx=cx-bw/2, by=H-42;
+      rr(ctx,bx,by,bw,26,8); ctx.fillStyle='rgba(61,214,208,0.10)'; ctx.fill();
+      ctx.strokeStyle='rgba(61,214,208,0.4)'; ctx.lineWidth=1; ctx.stroke();
+      label(ctx,'TASK  =  binary classification',bx+12,by+17,P.text,11);
+      ctx.globalAlpha=1;
+    }
+    label(ctx,'defining the objective + metric',14,H-14,P.muted2,10);
+  }
+
+  /* ---------- 02 Data Collection ---------- */
+  function drawCollect(ctx,W,H,t){
+    const srcNames=['DB','API','LOGS'], nS=3;
+    const topY=34, resY=H-52, resH=40, resX=W*0.16, resW=W*0.68;
+    // sources
+    for(let i=0;i<nS;i++){
+      const x=lerp(resX+resW*0.14, resX+resW*0.86, i/(nS-1));
+      rr(ctx,x-26,topY-15,52,24,6); ctx.fillStyle='rgba(126,140,171,0.10)'; ctx.fill();
+      ctx.strokeStyle=P.line; ctx.lineWidth=1; ctx.stroke();
+      label(ctx,srcNames[i],x,topY+1,P.muted,10.5,'center');
+    }
+    // reservoir
+    rr(ctx,resX,resY,resW,resH,9); ctx.strokeStyle=P.line; ctx.lineWidth=1.4; ctx.stroke();
+    const T=4.2, lt=t%T, fill=easeOut(clamp(lt/T,0,1));
+    ctx.save(); rr(ctx,resX+2,resY+2,resW-4,resH-4,7); ctx.clip();
+    const fh=(resH-4)*fill;
+    const grd=ctx.createLinearGradient(0,resY+resH-fh,0,resY+resH);
+    grd.addColorStop(0,'rgba(61,214,208,0.55)'); grd.addColorStop(1,'rgba(61,214,208,0.18)');
+    ctx.fillStyle=grd; ctx.fillRect(resX+2,resY+resH-2-fh,resW-4,fh);
+    ctx.restore();
+    // streaming particles
+    const nP=26;
+    for(let k=0;k<nP;k++){
+      const src=k%nS;
+      const sx=lerp(resX+resW*0.14, resX+resW*0.86, src/(nS-1));
+      const ph=((lt*0.9 + rnd(k)*T)%T)/T;
+      const y=lerp(topY+12, resY-2, ph);
+      const x=sx + (rnd(k+9)-0.5)*Math.min(60,resW*0.3)*ph;
+      const al=clamp(1-ph*0.4,0.2,1)*(ph<0.98?1:0);
+      ctx.beginPath(); ctx.arc(x,y,2.1,0,TAU);
+      ctx.fillStyle=`rgba(61,214,208,${al})`; ctx.fill();
+    }
+    const recs=Math.round(lerp(0,48213,fill));
+    label(ctx,'records ingested: '+recs.toLocaleString(),resX,resY-10,P.muted,10.5);
+    label(ctx,'streaming raw signals into one store',14,H-14,P.muted2,10);
+  }
+
+  /* ---------- 03 Data Preparation ---------- */
+  function drawPrep(ctx,W,H,t){
+    const T=6.5, lt=t%T;
+    const cols=8, rows=4, gx=W*0.14, gy=42, gw=W*0.72, cw=gw/cols, rh=26;
+    // classify cells deterministically
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+      const id=r*cols+c, x=gx+c*cw+cw/2, y=gy+r*rh+rh/2;
+      const v=rnd(id*1.3);
+      const bad = v>0.86, miss = v>0.72 && v<=0.80;
+      let color=P.cyanDim, rad=3.4, fill=true;
+      if(bad){ // outlier -> removed after phase1
+        const rem=clamp((lt-2.0)/1.0,0,1);
+        ctx.globalAlpha=1-rem;
+        color = lt<2.0? P.coral : P.coral;
+        if(lt<2.0){ ctx.beginPath(); ctx.arc(x,y,6,0,TAU); ctx.strokeStyle=P.coral; ctx.lineWidth=1.2; ctx.stroke(); }
+      } else if(miss){ // missing -> filled cyan
+        const fl=clamp((lt-2.0)/1.0,0,1);
+        if(fl<1 && lt>=0){ // hollow first
+          ctx.beginPath(); ctx.arc(x,y,3.4,0,TAU);
+          ctx.strokeStyle=lerpColor('rgba(255,178,62,0.9)',P.cyan,fl); ctx.lineWidth=1.4; ctx.stroke();
+          fill=false; if(fl>0.99) fill=true;
+        }
+        color=P.cyan;
+      }
+      // regroup into split blocks in phase 3
+      let dx=0,dy=0;
+      const reg=clamp((lt-3.6)/1.4,0,1);
+      if(reg>0 && !bad){
+        // assign to train/val/test by column
+        let block = c<Math.floor(cols*0.7)?0 : (c<Math.floor(cols*0.85)?1:2);
+        const targY = H-46;
+        const bx=[gx+gw*0.20, gx+gw*0.60, gx+gw*0.82][block];
+        dx=lerp(0,(bx-(x))*0.0,0); // keep x-ish
+        dy=lerp(0,(targY-y),easeOut(reg));
+      }
+      if(fill){
+        ctx.beginPath(); ctx.arc(x+dx,y+dy,rad,0,TAU); ctx.fillStyle=color; ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
+    // split labels appear
+    const reg=clamp((lt-4.2)/1.0,0,1);
+    if(reg>0){
+      ctx.globalAlpha=reg;
+      const y=H-22;
+      const segs=[['TRAIN 70%',gx+gw*0.02,gw*0.66,P.cyan],['VAL 15%',gx+gw*0.70,gw*0.13,P.amber],['TEST 15%',gx+gw*0.85,gw*0.15,P.green]];
+      segs.forEach(s=>{
+        rr(ctx,s[1],y-6,s[2]-4,4,2); ctx.fillStyle=s[3]; ctx.globalAlpha=reg*0.8; ctx.fill(); ctx.globalAlpha=reg;
+        label(ctx,s[0],s[1],y+16,s[3],9.5);
+      });
+      ctx.globalAlpha=1;
+    }
+    const msg = lt<2? 'flagging outliers & gaps' : lt<3.6? 'cleaning...' : 'splitting train / val / test';
+    label(ctx,msg,14,H-8,P.muted2,10);
+  }
+  function lerpColor(a,b,t){ // only used cyan/amber blend -> approximate
+    return t<0.5?a:b;
+  }
+
+  /* ---------- 04 Feature Engineering ---------- */
+  function drawFeatures(ctx,W,H,t){
+    const T=5, lt=t%T;
+    // raw columns (left)
+    const raws=['age','txns','signup_date'];
+    const lx=W*0.10, ly=48, lw=W*0.24;
+    label(ctx,'RAW',lx,ly-14,P.muted2,10);
+    raws.forEach((r,i)=>{
+      const y=ly+i*30;
+      rr(ctx,lx,y,lw,22,6); ctx.fillStyle='rgba(126,140,171,0.08)'; ctx.fill();
+      ctx.strokeStyle=P.line; ctx.lineWidth=1; ctx.stroke();
+      label(ctx,r,lx+9,y+15,P.muted,11);
+    });
+    // arrow
+    const mx=W*0.42;
+    ctx.strokeStyle=P.cyanDim; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(mx-10,H*0.5); ctx.lineTo(mx+16,H*0.5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(mx+16,H*0.5); ctx.lineTo(mx+10,H*0.5-4); ctx.lineTo(mx+10,H*0.5+4); ctx.closePath();
+    ctx.fillStyle=P.cyanDim; ctx.fill();
+    label(ctx,'transform',mx-6,H*0.5-12,P.muted2,9);
+    // engineered features (right) grow in
+    const feats=['age_scaled','txn_rate','is_weekend','recency_days','tier_A','tier_B'];
+    const rx=W*0.50, rw=W*0.40, ry=34, bh=15, gap=6;
+    label(ctx,'FEATURES',rx,ry-8,P.cyan,10);
+    feats.forEach((f,i)=>{
+      const y=ry+4+i*(bh+gap);
+      const app=clamp((lt-i*0.35)/0.7,0,1);
+      const wv=(0.4+rnd(i+3)*0.6)*easeOut(app);
+      rr(ctx,rx,y,rw,bh,4); ctx.fillStyle='rgba(255,255,255,0.03)'; ctx.fill();
+      rr(ctx,rx,y,rw*wv,bh,4);
+      ctx.fillStyle=`rgba(61,214,208,${0.25+0.35*app})`; ctx.fill();
+      ctx.globalAlpha=app;
+      label(ctx,f,rx+7,y+11,P.text,9.5);
+      ctx.globalAlpha=1;
+    });
+    label(ctx,'engineering signals the model can learn from',14,H-12,P.muted2,10);
+  }
+
+  /* ---------- 05 Model Training ---------- */
+  function drawTrain(ctx,W,H,t){
+    const T=5, lt=t%T, fit=easeOut(clamp(lt/2.6,0,1));
+    const px=W*0.10, py=34, pw=W*0.54, ph=H-70;
+    // axes
+    ctx.strokeStyle=P.grid; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px,py+ph); ctx.lineTo(px+pw,py+ph); ctx.stroke();
+    // data points around a trend
+    const pts=[];
+    for(let i=0;i<16;i++){
+      const fx=rnd(i*2.1), gy=fx*0.8+ (rnd(i*3.3)-0.5)*0.28;
+      const x=px+8+fx*(pw-16), y=py+ph-8-clamp(gy,0,1)*(ph-16);
+      pts.push([x,y,fx,clamp(gy,0,1)]);
+    }
+    // fit line: from random (start) to best fit slope~0.8
+    const m0=0.1, mFit=0.8, b0=0.55, bFit=0.06;
+    const m=lerp(m0,mFit,fit), b=lerp(b0,bFit,fit);
+    // residuals
+    pts.forEach(p=>{
+      const yhat=py+ph-8-clamp(m*p[2]+b,0,1)*(ph-16);
+      ctx.strokeStyle='rgba(255,107,107,'+ (0.35*(1-fit)+0.08) +')'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(p[0],p[1]); ctx.lineTo(p[0],yhat); ctx.stroke();
+    });
+    // fit line
+    ctx.strokeStyle=P.cyan; ctx.lineWidth=2.4;
+    const x1=px+8, y1=py+ph-8-clamp(m*0+b,0,1)*(ph-16);
+    const x2=px+pw-8, y2=py+ph-8-clamp(m*1+b,0,1)*(ph-16);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    // points
+    pts.forEach(p=>{ ctx.beginPath(); ctx.arc(p[0],p[1],3,0,TAU); ctx.fillStyle=P.text; ctx.fill(); });
+    // loss sparkline (right)
+    const sx=W*0.68, sy=44, sw=W*0.24, sh=54;
+    label(ctx,'training loss',sx,sy-8,P.muted,10);
+    ctx.strokeStyle=P.line; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx,sy+sh); ctx.lineTo(sx+sw,sy+sh); ctx.stroke();
+    ctx.strokeStyle=P.amber; ctx.lineWidth=2; ctx.beginPath();
+    const nL=Math.max(2,Math.floor(fit*30)+1);
+    for(let i=0;i<nL;i++){
+      const f=i/29, x=sx+f*sw, loss=Math.exp(-f*3.2)*(0.9)+0.05;
+      const y=sy+ (loss)*sh*0.9;
+      i? ctx.lineTo(x,y):ctx.moveTo(x,y);
+    }
+    ctx.stroke();
+    const epoch=Math.round(lerp(0,120,fit)), loss=(Math.exp(-fit*3.2)*0.9+0.05).toFixed(3);
+    label(ctx,'epoch '+epoch,sx,sy+sh+18,P.muted2,10);
+    label(ctx,'loss '+loss,sx,sy+sh+32,P.cyan,10);
+    label(ctx,'fitting the model — minimising error',14,H-12,P.muted2,10);
+  }
+
+  /* ---------- 06 Evaluation ---------- */
+  function drawEval(ctx,W,H,t){
+    const T=5, lt=t%T, rev=easeOut(clamp(lt/1.8,0,1));
+    // confusion matrix
+    const gx=W*0.10, gy=42, cell=Math.min(46,(H-96)/2), gw=cell*2;
+    const vals=[[182,24],[37,257]];
+    const colors=[[P.cyan,P.coral],[P.amber,P.cyan]];
+    label(ctx,'confusion matrix',gx,gy-12,P.muted,10);
+    for(let r=0;r<2;r++)for(let c=0;c<2;c++){
+      const x=gx+c*cell, y=gy+r*cell;
+      const good=(r===c);
+      rr(ctx,x,y,cell-4,cell-4,6);
+      ctx.fillStyle= good?'rgba(61,214,208,0.13)':'rgba(255,107,107,0.10)'; ctx.fill();
+      ctx.strokeStyle=good?'rgba(61,214,208,0.35)':'rgba(255,107,107,0.30)'; ctx.lineWidth=1; ctx.stroke();
+      const n=Math.round(vals[r][c]*rev);
+      ctx.fillStyle=good?P.cyan:P.coral; ctx.font="600 15px 'IBM Plex Mono',monospace";
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(n, x+(cell-4)/2, y+(cell-4)/2);
+    }
+    label(ctx,'pred \u2192',gx,gy+gw+14,P.muted2,9);
+    // metric bars
+    const bx=W*0.56, bw=W*0.36, by=46, bh=13, gap=16;
+    const mets=[['accuracy',0.878,P.cyan],['precision',0.883,P.cyan],['recall',0.831,P.amber]];
+    mets.forEach((m,i)=>{
+      const y=by+i*(bh+gap), app=clamp((lt-0.4-i*0.35)/1.0,0,1);
+      label(ctx,m[0],bx,y-3,P.muted,10);
+      rr(ctx,bx,y,bw,bh,4); ctx.fillStyle='rgba(255,255,255,0.04)'; ctx.fill();
+      rr(ctx,bx,y,bw*m[1]*easeOut(app),bh,4); ctx.fillStyle=m[2]; ctx.globalAlpha=0.85; ctx.fill(); ctx.globalAlpha=1;
+      label(ctx,(m[1]*easeOut(app)).toFixed(3),bx+bw+2,y+11,m[2],10,'left');
+      ctx.textAlign='left';
+    });
+    // verdict
+    const show=clamp((lt-2.6)/0.6,0,1);
+    if(show>0){
+      ctx.globalAlpha=show;
+      const vy=by+3*(bh+gap)+4;
+      rr(ctx,bx,vy,120,24,7); ctx.fillStyle='rgba(95,224,166,0.12)'; ctx.fill();
+      ctx.strokeStyle='rgba(95,224,166,0.5)'; ctx.lineWidth=1; ctx.stroke();
+      label(ctx,'\u2713 PASS \u2192 ship it',bx+11,vy+16,P.green,11);
+      ctx.globalAlpha=1;
+    }
+    label(ctx,'scoring on held-out data vs the target metric',14,H-12,P.muted2,10);
+  }
+
+  /* ---------- 07 Deployment ---------- */
+  function drawDeploy(ctx,W,H,t){
+    const cx=W*0.5, cy=H*0.46;
+    // endpoint box
+    const bw=110, bh=54, bx=cx-bw/2, by=cy-bh/2;
+    // pulse when a request lands
+    const beat=(t*1.6)%1; const pulse=Math.max(0,1-beat*3);
+    rr(ctx,bx-4-pulse*4,by-4-pulse*4,bw+8+pulse*8,bh+8+pulse*8,12);
+    ctx.strokeStyle=`rgba(61,214,208,${0.25*pulse})`; ctx.lineWidth=2; ctx.stroke();
+    rr(ctx,bx,by,bw,bh,10); ctx.fillStyle='rgba(61,214,208,0.10)'; ctx.fill();
+    ctx.strokeStyle=P.cyan; ctx.lineWidth=1.5; ctx.stroke();
+    label(ctx,'MODEL',cx,cy-6,P.cyan,11,'center');
+    label(ctx,'/predict',cx,cy+12,P.muted,10,'center');
+    // request/response streams
+    const lane=[cy-16,cy,cy+16];
+    for(let k=0;k<9;k++){
+      const ph=((t*0.6 + rnd(k)*1)%1);
+      const ly=lane[k%3];
+      if(ph<0.5){ // incoming from left
+        const x=lerp(20,bx-6,ph/0.5);
+        ctx.beginPath(); ctx.arc(x,ly,2.6,0,TAU); ctx.fillStyle=P.muted; ctx.fill();
+      } else { // outgoing right, colored prediction
+        const x=lerp(bx+bw+6,W-24,(ph-0.5)/0.5);
+        const cls=rnd(k+7)>0.5;
+        ctx.beginPath(); ctx.arc(x,ly,3,0,TAU); ctx.fillStyle= cls?P.cyan:P.amber; ctx.fill();
+      }
+    }
+    label(ctx,'requests',20,cy-30,P.muted2,9);
+    label(ctx,'predictions',W-24,cy-30,P.muted2,9,'right');
+    // readouts
+    const rps=Math.round(140+40*Math.sin(t*1.3));
+    label(ctx,'~38 ms  ·  '+rps+' req/s  ·  99.95% uptime',cx,H-20,P.muted,10.5,'center');
+    label(ctx,'serving live predictions in production',14,H-12,P.muted2,10);
+  }
+
+  /* ---------- 08 Monitoring ---------- */
+  function drawMonitor(ctx,W,H,t){
+    const T=7.5, lt=t%T;
+    const px=W*0.10, py=40, pw=W*0.80, ph=H-88;
+    // axes
+    ctx.strokeStyle=P.grid; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px,py+ph); ctx.lineTo(px+pw,py+ph); ctx.stroke();
+    // threshold
+    const thr=0.80, yThr=py+ph-(thr-0.6)/0.4*ph;
+    ctx.strokeStyle='rgba(255,178,62,0.55)'; ctx.lineWidth=1; ctx.setLineDash([4,5]);
+    ctx.beginPath(); ctx.moveTo(px,yThr); ctx.lineTo(px+pw,yThr); ctx.stroke(); ctx.setLineDash([]);
+    label(ctx,'threshold 0.80',px+pw,yThr-5,P.amber,9,'right');
+    // accuracy curve — good, then drift down, cross threshold near end
+    const head=clamp(lt/T,0,1);
+    const val=x=> x<0.5? 0.90+0.015*Math.sin(x*30) : lerp(0.90,0.66,(x-0.5)/0.5);
+    const crossX=0.72;
+    ctx.beginPath();
+    const steps=Math.max(2,Math.floor(head*120));
+    for(let i=0;i<=steps;i++){
+      const f=i/120, x=px+f*pw, v=val(f), y=py+ph-(clamp(v,0.6,1)-0.6)/0.4*ph;
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    }
+    ctx.strokeStyle=head>crossX?P.coral:P.cyan; ctx.lineWidth=2.2; ctx.stroke();
+    // head dot
+    const hv=val(head), hy=py+ph-(clamp(hv,0.6,1)-0.6)/0.4*ph, hx=px+head*pw;
+    ctx.beginPath(); ctx.arc(hx,hy,3.5,0,TAU); ctx.fillStyle=head>crossX?P.coral:P.cyan; ctx.fill();
+    label(ctx,'live accuracy',px,py-14,P.muted,10);
+    label(ctx,hv.toFixed(3),hx+6,hy-4, head>crossX?P.coral:P.cyan,10);
+    // alert + retrain when crossed
+    if(head>crossX){
+      const fl=0.5+0.5*Math.sin(t*8);
+      ctx.globalAlpha=0.6+0.4*fl;
+      rr(ctx,px,H-30,150,20,6); ctx.fillStyle='rgba(255,107,107,0.14)'; ctx.fill();
+      ctx.strokeStyle='rgba(255,107,107,0.6)'; ctx.lineWidth=1; ctx.stroke();
+      label(ctx,'\u26A0 DRIFT \u2192 retrain',px+10,H-16,P.coral,10.5);
+      ctx.globalAlpha=1;
+      // loop arrow hint
+      label(ctx,'\u21BB back to stage 01',px+pw,H-16,P.amber,10,'right');
+    } else {
+      label(ctx,'healthy — watching for drift',px,H-16,P.muted2,10);
+    }
+  }
+
+  /* ============================ BOOT ============================ */
+  resizeCanvas();
+  enterStage();
+  setPlaying(playing);
+  requestAnimationFrame(t=>{last=t;requestAnimationFrame(frame);});
+})();
+</script>
+</body>
+</html>
