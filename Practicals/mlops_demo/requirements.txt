@@ -1,0 +1,6 @@
+mlflow==3.17.0
+scikit-learn==1.5.2
+pandas==2.2.2
+numpy==2.2.6
+evidently==0.7.23
+pytest==9.0.3
