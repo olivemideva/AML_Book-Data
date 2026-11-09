@@ -1,6 +1,11 @@
-mlflow==3.17.0
 scikit-learn==1.5.2
 pandas==2.2.2
 numpy==2.2.6
+joblib
 evidently==0.7.23
+matplotlib
+fastapi==0.115.6
+uvicorn==0.42.0
+httpx==0.28.1
 pytest==9.0.3
+jupyter
